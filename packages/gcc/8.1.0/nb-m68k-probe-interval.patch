@@ -1,0 +1,12 @@
+--- a/gcc/config/m68k/m68k.h
++++ b/gcc/config/m68k/m68k.h
+@@ -465,6 +465,9 @@
+ 
+ /* Stack layout; function entry, exit and calling.  */
+ 
++#define STACK_CHECK_PROBE_INTERVAL_EXP 8 
++#define STACK_CHECK_PROTECT 0
++
+ #define STACK_GROWS_DOWNWARD 1
+ #define FRAME_GROWS_DOWNWARD 1
+ 

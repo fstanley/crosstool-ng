@@ -1,0 +1,12 @@
+--- a/gcc/config/arm/arm.h
+--- b/gcc/config/arm/arm.h
+@@ -1241,6 +1241,9 @@
+ 
+ /* Stack layout; function entry, exit and calling.  */
+ 
++#define STACK_CHECK_PROBE_INTERVAL_EXP 8 
++#define STACK_CHECK_PROTECT 0
++
+ /* Define this if pushing a word on the stack
+    makes the stack pointer a smaller address.  */
+ #define STACK_GROWS_DOWNWARD  1
