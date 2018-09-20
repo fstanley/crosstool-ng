@@ -1,0 +1,48 @@
+--- a/gcc/config/arm/t-rmprofile
++++ b/gcc/config/arm/t-rmprofile
+@@ -27,15 +27,13 @@
+ 
+ # Arch and FPU variants to build libraries with
+ 
+-MULTI_ARCH_OPTS_RM	= march=armv6s-m/march=armv7-m/march=armv7e-m/march=armv7e-m+fp/march=armv7e-m+fp.dp/march=armv8-m.base/march=armv8-m.main/march=armv8-m.main+fp/march=armv8-m.main+fp.dp
+-MULTI_ARCH_DIRS_RM	= v6-m v7-m v7e-m v7e-m+fp v7e-m+dp v8-m.base v8-m.main v8-m.main+fp v8-m.main+dp
++MULTI_ARCH_OPTS_RM	= march=armv6s-m/march=armv7-m/march=armv7e-m/march=armv7e-m+fp/march=armv7e-m+fp.dp
++MULTI_ARCH_DIRS_RM	= v6-m v7-m v7e-m v7e-m+fp v7e-m+dp
+ 
+ # Base M-profile (no fp)
+ MULTILIB_REQUIRED	+= mthumb/march=armv6s-m/mfloat-abi=soft
+ MULTILIB_REQUIRED	+= mthumb/march=armv7-m/mfloat-abi=soft
+ MULTILIB_REQUIRED	+= mthumb/march=armv7e-m/mfloat-abi=soft
+-MULTILIB_REQUIRED	+= mthumb/march=armv8-m.base/mfloat-abi=soft
+-MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main/mfloat-abi=soft
+ 
+ # ARMv7e-M with FP (single and double precision variants)
+ MULTILIB_REQUIRED	+= mthumb/march=armv7e-m+fp/mfloat-abi=hard
+@@ -43,26 +41,14 @@
+ MULTILIB_REQUIRED	+= mthumb/march=armv7e-m+fp.dp/mfloat-abi=hard
+ MULTILIB_REQUIRED	+= mthumb/march=armv7e-m+fp.dp/mfloat-abi=softfp
+ 
+-# ARMv8-M with FP (single and double precision variants)
+-MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main+fp/mfloat-abi=hard
+-MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main+fp/mfloat-abi=softfp
+-MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main+fp.dp/mfloat-abi=hard
+-MULTILIB_REQUIRED	+= mthumb/march=armv8-m.main+fp.dp/mfloat-abi=softfp
+-
+-
+ 
+ # Arch Matches
+ MULTILIB_MATCHES	+= march?armv6s-m=march?armv6-m
+ 
+-# Map all v8-m.main+dsp FP variants down the the variant without DSP.
+-MULTILIB_MATCHES	+= march?armv8-m.main=march?armv8-m.main+dsp \
+-			   $(foreach FP, +fp +fp.dp, \
+-			     march?armv8-m.main$(FP)=march?armv8-m.main+dsp$(FP))
+-
+ # For single-precision only fpv5, use the base fp libraries
+ MULTILIB_MATCHES	+= march?armv7e-m+fp=march?armv7e-m+fpv5
+ 
+ # Softfp but no FP.  Use the soft-float libraries.
+-MULTILIB_REUSE		+= $(foreach ARCH, armv6s-m armv7-m armv7e-m armv8-m\.base armv8-m\.main, \
++MULTILIB_REUSE		+= $(foreach ARCH, armv6s-m armv7-m armv7e-m, \
+ 			     mthumb/march.$(ARCH)/mfloat-abi.soft=mthumb/march.$(ARCH)/mfloat-abi.softfp)
+ 
