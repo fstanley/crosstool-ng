@@ -1,0 +1,335 @@
+--- a/gcc/c-family/c-format.c
++++ b/gcc/c-family/c-format.c
+@@ -58,6 +58,10 @@
+ static GTY(()) tree local_tree_type_node;
+ static GTY(()) tree local_gcall_ptr_node;
+ static GTY(()) tree locus;
++/* Netburner object printf identifiers */
++static GTY(()) tree IPADDR;
++static GTY(()) tree IPADDR6;
++static GTY(()) tree IPADDR4;
+ 
+ static bool decode_format_attr (tree, function_format_info *, int);
+ static int decode_format_type (const char *);
+@@ -107,12 +111,12 @@
+ /* Check that we have a pointer to a string suitable for use as a format.
+    The default is to check for a char type.
+    For objective-c dialects, this is extended to include references to string
+-   objects validated by objc_string_ref_type_p ().  
+-   Targets may also provide a string object type that can be used within c and 
++   objects validated by objc_string_ref_type_p ().
++   Targets may also provide a string object type that can be used within c and
+    c++ and shared with their respective objective-c dialects. In this case the
+    reference to a format string is checked for validity via a hook.
+-   
+-   The function returns true if strref points to any string type valid for the 
++
++   The function returns true if strref points to any string type valid for the
+    language dialect and target.  */
+ 
+ static bool
+@@ -162,8 +166,8 @@
+ }
+ 
+ /* Verify that the format_num argument is actually a string reference suitable,
+-   for the language dialect and target (in case the format attribute is in 
+-   error).  When we know the specific reference type expected, this is also 
++   for the language dialect and target (in case the format attribute is in
++   error).  When we know the specific reference type expected, this is also
+    checked.  */
+ static bool
+ check_format_string (tree fntype, unsigned HOST_WIDE_INT format_num,
+@@ -197,7 +201,7 @@
+     return true;
+ 
+   /* Now check that the arg matches the expected type.  */
+-  is_char_ref = 
++  is_char_ref =
+     (TYPE_MAIN_VARIANT (TREE_TYPE (ref)) == char_type_node);
+ 
+   fmt_flags = format_flags (expected_format_type);
+@@ -231,18 +235,18 @@
+       *no_add_attrs = true;
+       return false;
+     }
+-  
++
+   /* We will assert that objective-c will support either its own string type
+      or the target-supplied variant.  */
+   if (!is_objc_sref)
+     is_target_sref = (*targetcm.string_object_ref_type_p) ((const_tree) ref);
+ 
+-  if (expected_format_type == (int) gcc_objc_string_format_type 
++  if (expected_format_type == (int) gcc_objc_string_format_type
+       && (is_objc_sref || is_target_sref))
+     return true;
+ 
+   /* We will allow a target string ref to match only itself.  */
+-  if (first_target_format_type 
++  if (first_target_format_type
+       && expected_format_type >= first_target_format_type
+       && is_target_sref)
+     return true;
+@@ -302,7 +306,7 @@
+       p = convert_format_name_to_system_name (p);
+ 
+       info->format_type = decode_format_type (p);
+-      
++
+       if (!c_dialect_objc ()
+ 	   && info->format_type == gcc_objc_string_format_type)
+ 	{
+@@ -504,7 +508,7 @@
+   { '0',  0, 0, 0, N_("'0' flag"),        N_("the '0' printf flag"),              STD_C89 },
+   { '-',  0, 0, 0, N_("'-' flag"),        N_("the '-' printf flag"),              STD_C89 },
+   { '\'', 0, 0, 0, N_("''' flag"),        N_("the ''' printf flag"),              STD_EXT },
+-  { 'I',  0, 0, 0, N_("'I' flag"),        N_("the 'I' printf flag"),              STD_EXT },
++//  { 'I',  0, 0, 0, N_("'I' flag"),        N_("the 'I' printf flag"),              STD_EXT },
+   { 'w',  0, 0, 0, N_("field width"),     N_("field width in printf format"),     STD_C89 },
+   { 'p',  0, 0, 0, N_("precision"),       N_("precision in printf format"),       STD_C89 },
+   { 'L',  0, 0, 0, N_("length modifier"), N_("length modifier in printf format"), STD_C89 },
+@@ -638,17 +642,17 @@
+ static const format_char_info print_char_table[] =
+ {
+   /* C89 conversion specifiers.  */
+-  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +'I",  "i",  NULL },
++  { "di",  0, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  TEX_LL,  T99_SST, T99_PD,  T99_IM,  BADLEN,  BADLEN,  BADLEN  }, "-wp0 +'",  "i",  NULL },
+   { "oxX", 0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM, BADLEN,  BADLEN,  BADLEN }, "-wp0#",     "i",  NULL },
+-  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM, BADLEN,  BADLEN,  BADLEN }, "-wp0'I",    "i",  NULL },
+-  { "fgG", 0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN,  TEX_D32, TEX_D64, TEX_D128 }, "-wp0 +#'I", "",   NULL },
+-  { "eE",  0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN,  TEX_D32, TEX_D64, TEX_D128 }, "-wp0 +#I",  "",   NULL },
++  { "u",   0, STD_C89, { T89_UI,  T99_UC,  T89_US,  T89_UL,  T9L_ULL, TEX_ULL, T99_ST,  T99_UPD, T99_UIM, BADLEN,  BADLEN,  BADLEN }, "-wp0'",    "i",  NULL },
++  { "fgG", 0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN,  TEX_D32, TEX_D64, TEX_D128 }, "-wp0 +#'", "",   NULL },
++  { "eE",  0, STD_C89, { T89_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T89_LD,  BADLEN,  BADLEN,  BADLEN,  TEX_D32, TEX_D64, TEX_D128 }, "-wp0 +#",  "",   NULL },
+   { "c",   0, STD_C89, { T89_I,   BADLEN,  BADLEN,  T94_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-w",        "",   NULL },
+   { "s",   1, STD_C89, { T89_C,   BADLEN,  BADLEN,  T94_W,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp",       "cR", NULL },
+   { "p",   1, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-w",        "c",  NULL },
+   { "n",   1, STD_C89, { T89_I,   T99_SC,  T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  T99_IM,  BADLEN,  BADLEN,  BADLEN }, "",          "W",  NULL },
+   /* C99 conversion specifiers.  */
+-  { "F",   0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN,  TEX_D32, TEX_D64, TEX_D128 }, "-wp0 +#'I", "",   NULL },
++  { "F",   0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN,  TEX_D32, TEX_D64, TEX_D128 }, "-wp0 +#'", "",   NULL },
+   { "aA",  0, STD_C99, { T99_D,   BADLEN,  BADLEN,  T99_D,   BADLEN,  T99_LD,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0 +#",   "",   NULL },
+   /* X/Open conversion specifiers.  */
+   { "C",   0, STD_EXT, { TEX_WI,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-w",        "",   NULL },
+@@ -658,6 +662,12 @@
+   { NULL,  0, STD_C89, NOLENGTHS, NULL, NULL, NULL }
+ };
+ 
++/* Netburner conversion specifiers */
++static const format_char_info nb_printf_table[] =
++{
++  { "I",   0, STD_C89, { T89_V,   BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN  }, "w", "", NULL },
++};
++
+ static const format_char_info asm_fprintf_char_table[] =
+ {
+   /* C89 conversion specifiers.  */
+@@ -880,7 +890,7 @@
+ /* This must be in the same order as enum format_type.  */
+ static const format_kind_info format_types_orig[] =
+ {
+-  { "gnu_printf",   printf_length_specs,  print_char_table, " +#0-'I", NULL,
++  { "gnu_printf",   printf_length_specs,  print_char_table, " +#0-'", NULL,
+     printf_flag_specs, printf_flag_pairs,
+     FMT_FLAG_ARG_CONVERT|FMT_FLAG_DOLLAR_MULTIPLE|FMT_FLAG_USE_DOLLAR|FMT_FLAG_EMPTY_PREC_OK,
+     'w', 0, 'p', 0, 'L', 0,
+@@ -1072,6 +1082,11 @@
+   return format_type_error;
+ }
+ 
++static void
++init_dynamic_print_info (void);
++
++static unsigned int
++find_char_info_specifier_index (const format_char_info *fci, int c);
+ 
+ /* Check the argument list of a call to printf, scanf, etc.
+    ATTRS are the attributes on the function type.  There are NARGS argument
+@@ -1084,8 +1099,20 @@
+ check_function_format (tree attrs, int nargs, tree *argarray,
+ 		       vec<location_t> *arglocs)
+ {
++    /* Our first time through, we have to make sure that our
++    format_type data is allocated dynamically and is modifiable.  */
++    if (!dynamic_format_types)
++    {
++    format_types = dynamic_format_types = (format_kind_info *)
++     xmemdup (format_types_orig, sizeof (format_types_orig),
++       sizeof (format_types_orig));
++        init_dynamic_print_info ();
++    }
++    else if (!IPADDR || !IPADDR4)
++    {
++        init_dynamic_print_info();
++    }
+   tree a;
+-
+   /* See if this function has any format attributes.  */
+   for (a = attrs; a; a = TREE_CHAIN (a))
+     {
+@@ -1557,7 +1584,7 @@
+ 
+       if (params == 0)
+ 	res->number_other++;
+-      else 
++      else
+ 	{
+ 	  if (res->number_extra_args == 0)
+ 	    res->extra_arg_loc = EXPR_LOC_OR_LOC (TREE_VALUE (params),
+@@ -1598,7 +1625,7 @@
+     }
+   res->format_string_loc = EXPR_LOC_OR_LOC (format_tree, input_location);
+   format_tree = TREE_OPERAND (format_tree, 0);
+-  if (format_types[info->format_type].flags 
++  if (format_types[info->format_type].flags
+       & (int) FMT_FLAG_PARSE_ARG_CONVERT_EXTERNAL)
+     {
+       bool objc_str = (info->format_type == gcc_objc_string_format_type);
+@@ -1606,7 +1633,7 @@
+ 	 a valid type.  */
+       if (TREE_CODE (format_tree) != CONST_DECL
+ 	  || !((objc_str && objc_string_ref_type_p (TREE_TYPE (format_tree)))
+-		|| (*targetcm.string_object_ref_type_p) 
++		|| (*targetcm.string_object_ref_type_p)
+ 				     ((const_tree) TREE_TYPE (format_tree))))
+ 	{
+ 	  res->number_non_literal++;
+@@ -3813,6 +3840,100 @@
+     }
+ }
+ 
++#include <string.h>
++/* Determine the type of Netburner's extension printf types in the code
++   being compiled for use.  You must have set dynamic_format_types before
++   calling this function.  */
++static void
++init_dynamic_print_info (void)
++{
++    static bool ipaddr_char_added;
++  if (!IPADDR || !IPADDR4)
++    {
++        // nb_fci is shorthand for NetBurner_format_char_info
++      static format_char_info *nb_fci;
++      format_char_info *fci;
++
++      /* For the GCC __gcc_gfc__ custom format specifier to work, one
++	 must have declared 'IPADDR' prior to using this attribute.  If
++	 we haven't seen this declarations then you shouldn't use the
++	 specifier requiring that type.  */
++      if ((IPADDR = maybe_get_identifier ("IPADDR")))
++	{
++	  IPADDR = identifier_global_value (IPADDR);
++      if (!IPADDR && (IPADDR = maybe_get_identifier ("IPADDR6")))
++      {
++          IPADDR = identifier_global_value (IPADDR);
++      }
++
++	  if (IPADDR && !ipaddr_char_added)
++	    {
++	      if (TREE_CODE (IPADDR) != TYPE_DECL
++		  || TREE_TYPE (IPADDR) == error_mark_node)
++		{
++		  error ("%<IPADDR%> is not defined as a type");
++		  IPADDR = 0;
++		}
++	      else
++          {
++		IPADDR = TREE_TYPE (IPADDR);
++          }
++	    }
++	}
++
++      if (IPADDR && !IPADDR4 && (IPADDR4 = maybe_get_identifier ("IPADDR4")))
++      {
++          IPADDR4 = identifier_global_value (IPADDR4);
++          if (IPADDR4)
++          {
++              if (TREE_CODE (IPADDR4) != TYPE_DECL
++                      || TREE_TYPE (IPADDR4) == error_mark_node)
++              {
++//                  error ("%<IPADDR%> is not defined as a type");
++                  IPADDR4 = 0;
++              }
++              else
++                  IPADDR4 = TREE_TYPE (IPADDR4);
++          }
++      }
++      /* Assign the new data for use.  */
++
++      /* Handle the __gcc_gfc__ format specifics.  */
++      if (!nb_fci)
++	dynamic_format_types[printf_format_type].conversion_specs =
++	  nb_fci = (format_char_info *)
++		     xmemdup (print_char_table,
++			      sizeof (print_char_table),
++			      sizeof (print_char_table) + sizeof(nb_printf_table));
++      if (!ipaddr_char_added)
++      {
++          for (fci = nb_fci; fci->format_chars; fci++){};
++      }
++      if (IPADDR)
++	{
++      char buf[40];
++      if (!ipaddr_char_added)
++      {
++	  const unsigned i = find_char_info_specifier_index (nb_printf_table, 'I');
++      memcpy(fci+1, fci, sizeof(format_char_info));
++      memcpy(fci, nb_printf_table + i, sizeof(format_char_info));
++        ipaddr_char_added = true;
++      }
++      else {
++	  const unsigned i = find_char_info_specifier_index (nb_fci, 'I');
++        fci = nb_fci + i;
++      }
++	  fci->types[FMT_LEN_none].type = &IPADDR;
++	  fci->types[FMT_LEN_l].type = &IPADDR;
++      if (IPADDR4) {
++          fci->types[FMT_LEN_h].type = &IPADDR4;
++      }
++	  fci->pointer_count = 0;
++      fci++;
++	}
++    }
++}
++
+ /* Determine the types of "tree" and "location_t" in the code being
+    compiled for use in GCC's diagnostic custom format attributes.  You
+    must have set dynamic_format_types before calling this function.  */
+@@ -4102,7 +4223,6 @@
+       *no_add_attrs = true;
+       return NULL_TREE;
+     }
+-
+   /* If this is a custom GCC-internal format type, we have to
+      initialize certain bits at runtime.  */
+   if (info.format_type == asm_fprintf_format_type
+@@ -4112,12 +4232,15 @@
+       || info.format_type == gcc_cdiag_format_type
+       || info.format_type == gcc_cxxdiag_format_type)
+     {
+-      /* Our first time through, we have to make sure that our
+-	 format_type data is allocated dynamically and is modifiable.  */
+-      if (!dynamic_format_types)
+-	format_types = dynamic_format_types = (format_kind_info *)
+-	  xmemdup (format_types_orig, sizeof (format_types_orig),
++        /* Our first time through, we have to make sure that our
++	    format_type data is allocated dynamically and is modifiable.  */
++        if (!dynamic_format_types)
++        {
++	    format_types = dynamic_format_types = (format_kind_info *)
++	     xmemdup (format_types_orig, sizeof (format_types_orig),
+ 		   sizeof (format_types_orig));
++        }
++
+ 
+       /* If this is format __asm_fprintf__, we have to initialize
+ 	 GCC's notion of HOST_WIDE_INT for checking %wd.  */
+@@ -4127,6 +4250,8 @@
+ 	 notion of 'locus' at runtime for %L.  */
+       else if (info.format_type == gcc_gfc_format_type)
+ 	init_dynamic_gfc_info ();
++      else if (info.format_type == printf_format_type)
++	init_dynamic_print_info ();
+       /* If this is one of the diagnostic attributes, then we have to
+ 	 initialize 'location_t' and 'tree' at runtime.  */
+       else if (info.format_type == gcc_diag_format_type
