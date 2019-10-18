@@ -39,7 +39,7 @@
 +    if ( OSRunning == 1 )
 +    {
 +      OSLock();
-+    )
++    }
 +    /* End NetBurner */
 +
      // bset with no immediate addressing (not SMP-safe)
@@ -53,7 +53,7 @@
 +    if ( OSRunning == 1 )
 +    {
 +      OSUnlock();
-+    )
++    }
 +    /* End NetBurner */
 +
      return __result;
