@@ -1,0 +1,61 @@
+--- gcc/libstdc++-v3/config/cpu/m68k/atomicity.h
++++ gcc/libstdc++-v3/config/cpu/m68k/atomicity.h
+@@ -24,6 +24,30 @@
+ 
+ #include <ext/atomicity.h>
+ 
++/*
++ * NetBurner, Inc. 2007
++ *    Added OSLock and OSUnlock to support C++ standard templates using the
++ *    uCos operating system. The lock is not used during global iniialization
++ *    (construction) since construction is serial and the operating system is
++ *    not running (OSRunning == 0 ). Issue is documented on line 78 of this
++ *    file.
++ *
++ *    Issue identified in NetBurner ticket 19840
++ */
++#ifdef __cplusplus
++extern "C"
++{
++   extern unsigned char OSRunning;
++   void OSLock( void );
++   void OSUnlock( void );
++}
++#else
++   extern unsigned char OSRunning;
++   extern void OSLock( void );
++   extern void OSUnlock( void );
++/* End NetBurner  */
++#endif
++
+ namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+ {
+ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+@@ -88,6 +112,13 @@
+   {
+     _Atomic_word __result;
+ 
++    /* NetBurner */
++    if ( OSRunning == 1 )
++    {
++      OSLock();
++    )
++    /* End NetBurner */
++
+     // bset with no immediate addressing (not SMP-safe)
+ #if defined(__mcfisaa__) || defined(__mcfisaaplus__)
+     __asm__ __volatile__("1: bset.b #7,%0@\n\tjbne 1b"
+@@ -117,6 +148,13 @@
+ 
+     _Atomicity_lock<0>::_S_atomicity_lock = 0;
+ 
++    /* NetBurner */
++    if ( OSRunning == 1 )
++    {
++      OSUnlock();
++    )
++    /* End NetBurner */
++
+     return __result;
+   }
+ 

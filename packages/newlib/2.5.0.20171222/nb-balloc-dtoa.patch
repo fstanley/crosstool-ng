@@ -1,0 +1,41 @@
+--- newlib/newlib/libc/stdlib/dtoa.c
++++ newlib/newlib/libc/stdlib/dtoa.c
+@@ -31,6 +31,8 @@
+ #include <reent.h>
+ #include <string.h>
+ #include "mprec.h"
++void balloc_lock();
++void balloc_unlock();
+ 
+ static int
+ _DEFUN (quorem,
+@@ -236,6 +238,7 @@
+   d.d = _d;
+ 
+   _REENT_CHECK_MP(ptr);
++  balloc_lock();
+   if (_REENT_MP_RESULT(ptr))
+     {
+       _REENT_MP_RESULT(ptr)->_k = _REENT_MP_RESULT_K(ptr);
+@@ -243,6 +246,7 @@
+       Bfree (ptr, _REENT_MP_RESULT(ptr));
+       _REENT_MP_RESULT(ptr) = 0;
+     }
++  balloc_unlock();
+ 
+   if (word0 (d) & Sign_bit)
+     {
+@@ -424,11 +428,13 @@
+ 	i = 1;
+     }
+   j = sizeof (__ULong);
++  balloc_lock();
+   for (_REENT_MP_RESULT_K(ptr) = 0; sizeof (_Bigint) - sizeof (__ULong) + j <= i;
+        j <<= 1)
+     _REENT_MP_RESULT_K(ptr)++;
+   _REENT_MP_RESULT(ptr) = Balloc (ptr, _REENT_MP_RESULT_K(ptr));
+   s = s0 = (char *) _REENT_MP_RESULT(ptr);
++  balloc_unlock();
+ 
+   if (ilim >= 0 && ilim <= Quick_max && try_quick)
+     {
