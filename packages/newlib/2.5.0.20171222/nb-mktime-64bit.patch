@@ -1,0 +1,49 @@
+--- newlib/newlib/libc/time/mktime.c
++++ newlib/newlib/libc/time/mktime.c
+@@ -148,13 +148,11 @@
+     }
+ }
+ 
+-time_t 
+-_DEFUN(mktime, (tim_p),
+-     struct tm *tim_p)
++time_t _DEFUN(mktime, (tim_p), struct tm *tim_p)
+ {
+   time_t tim = 0;
+-  long days = 0;
+-  int year, isdst=0;
++  time_t days = 0;
++  time_t year, isdst=0;
+   __tzinfo_type *tz = __gettzinfo ();
+ 
+   /* validate structure */
+@@ -199,7 +197,7 @@
+   if (_daylight)
+     {
+       int tm_isdst;
+-      int y = tim_p->tm_year + YEAR_BASE;
++      time_t y = tim_p->tm_year + YEAR_BASE;
+       /* Convert user positive into 1 */
+       tm_isdst = tim_p->tm_isdst > 0  ?  1 : tim_p->tm_isdst;
+       isdst = tm_isdst;
+@@ -232,13 +230,12 @@
+ 		     wrong. The diff is typically one hour, or 3600 seconds,
+ 		     and should fit in a 16-bit int, even though offset
+ 		     is a long to accomodate 12 hours. */
+-		  int diff = (int) (tz->__tzrule[0].offset
+-				    - tz->__tzrule[1].offset);
++		  time_t diff = (time_t) (tz->__tzrule[0].offset - tz->__tzrule[1].offset);
+ 		  if (!isdst)
+ 		    diff = -diff;
+ 		  tim_p->tm_sec += diff;
+ 		  tim += diff;  /* we also need to correct our current time calculation */
+-		  int mday = tim_p->tm_mday;
++		  time_t mday = tim_p->tm_mday;
+ 		  validate_structure (tim_p);
+ 		  mday = tim_p->tm_mday - mday;
+ 		  /* roll over occurred */
+@@ -282,3 +279,4 @@
+ 	
+   return tim;
+ }
++

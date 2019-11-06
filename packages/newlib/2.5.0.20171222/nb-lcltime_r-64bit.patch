@@ -1,0 +1,60 @@
+--- newlib/newlib/libc/time/lcltime_r.c
++++ newlib/newlib/libc/time/lcltime_r.c
+@@ -16,13 +16,11 @@
+ #include "local.h"
+ 
+ struct tm *
+-_DEFUN (localtime_r, (tim_p, res),
+-	_CONST time_t *__restrict tim_p _AND
+-	struct tm *__restrict res)
++_DEFUN (localtime_r, (tim_p, res), _CONST time_t * __restrict tim_p _AND struct tm *__restrict res)
+ {
+-  long offset;
+-  int hours, mins, secs;
+-  int year;
++  time_t  offset;
++  time_t  hours, mins, secs;
++  time_t year;
+   __tzinfo_type *_CONST tz = __gettzinfo ();
+   _CONST int *ip;
+ 
+@@ -36,26 +34,28 @@
+   if (_daylight)
+     {
+       if (year == tz->__tzyear || __tzcalc_limits (year))
+-	res->tm_isdst = (tz->__tznorth
+-	  ? (*tim_p >= tz->__tzrule[0].change
+-	  && *tim_p < tz->__tzrule[1].change)
+-	  : (*tim_p >= tz->__tzrule[0].change
+-	  || *tim_p < tz->__tzrule[1].change));
++      {
++      time_t ntzn= (tz->__tzrule[0].change < tz->__tzrule[1].change);
++
++      res->tm_isdst = (ntzn ? (*tim_p >= tz->__tzrule[0].change && *tim_p < tz->__tzrule[1].change) : (*tim_p >= tz->__tzrule[0].change|| *tim_p < tz->__tzrule[1].change));
++      }
+       else
++      {
+ 	res->tm_isdst = -1;
+     }
++    }
+   else
+     res->tm_isdst = 0;
+ 
+-  offset = (res->tm_isdst == 1
+-    ? tz->__tzrule[1].offset
+-    : tz->__tzrule[0].offset);
+ 
+-  hours = (int) (offset / SECSPERHOUR);
++  offset = (res->tm_isdst == 1? tz->__tzrule[1].offset: tz->__tzrule[0].offset);
++
++
++  hours =  (offset / SECSPERHOUR);
+   offset = offset % SECSPERHOUR;
+ 
+-  mins = (int) (offset / SECSPERMIN);
+-  secs = (int) (offset % SECSPERMIN);
++  mins =  (offset / SECSPERMIN);
++  secs =  (offset % SECSPERMIN);
+ 
+   res->tm_sec -= secs;
+   res->tm_min -= mins;
